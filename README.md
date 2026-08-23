@@ -94,3 +94,4 @@ a small EKG-style line used in the hero and auth panel — kept deliberately rar
 
 The next step adds the Patient Health Profile, Health History, Emergency
 Contacts, and Emergency Health Card.
+"# Medix" 
