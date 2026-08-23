@@ -6,11 +6,11 @@ export default function SettingsPage() {
     <ComingSoon
       icon={Settings}
       title="Settings"
-      description="Manage your account, notifications, emergency contacts and privacy preferences."
+      description="Manage your account, notifications, security and app preferences."
       bullets={[
         "Profile, password and account management",
         "Notification and reminder preferences",
-        "Emergency contact management",
+        "Two-factor authentication and login security",
         "Data privacy and export controls",
       ]}
     />

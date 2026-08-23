@@ -1,9 +1,12 @@
-import { Siren, Phone, MapPin, Sparkles, Users } from "lucide-react";
+"use client";
+
+import Link from "next/link";
+import { Siren, Phone, MapPin, Sparkles, Users, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MedicalDisclaimer } from "@/components/MedicalDisclaimer";
-import { emergencyContact } from "@/lib/demo-data";
+import { useHealthProfile } from "@/lib/health-profile-context";
 
 const upcoming = [
   {
@@ -24,6 +27,9 @@ const upcoming = [
 ];
 
 export default function SOSPage() {
+  const { profile } = useHealthProfile();
+  const contact = profile.emergencyContacts[0];
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-start gap-3.5">
@@ -89,11 +95,20 @@ export default function SOSPage() {
               Your emergency contact
             </p>
             <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
-              {emergencyContact.name} · {emergencyContact.phone}
+              {contact ? `${contact.name} · ${contact.phone}` : "No emergency contact added yet."}
             </p>
           </div>
           <Button variant="outline" size="sm" asChild>
-            <a href="/settings">Manage Contacts</a>
+            <Link href="/health-history">
+              {contact ? (
+                "Manage Contacts"
+              ) : (
+                <>
+                  <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                  Add Contact
+                </>
+              )}
+            </Link>
           </Button>
         </CardContent>
       </Card>

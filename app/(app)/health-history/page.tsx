@@ -1,18 +1,37 @@
+"use client";
+
 import { ClipboardList } from "lucide-react";
-import { ComingSoon } from "@/components/ComingSoon";
+import { PageHeader } from "@/components/PageHeader";
+import { MedicalDisclaimer } from "@/components/MedicalDisclaimer";
+import { ProfileCompletion } from "@/components/ProfileCompletion";
+import { ProfileInfoSection } from "@/components/ProfileInfoSection";
+import { MedicationsManager } from "@/components/MedicationsManager";
+import { OtherInfoCard } from "@/components/OtherInfoCard";
+import { EmergencyContactsManager } from "@/components/EmergencyContactsManager";
+import { SharingPreferencesCard } from "@/components/SharingPreferencesCard";
+import { useHealthProfile } from "@/lib/health-profile-context";
+import { calculateProfileCompletion } from "@/lib/health-profile";
 
 export default function HealthHistoryPage() {
+  const { profile } = useHealthProfile();
+  const completion = calculateProfileCompletion(profile);
+
   return (
-    <ComingSoon
-      icon={ClipboardList}
-      title="Health History"
-      description="One organized timeline of your conditions, visits, allergies and past treatments."
-      bullets={[
-        "A single timeline of conditions, visits and treatments",
-        "Allergy and chronic condition tracking",
-        "Family history fields relevant to your care",
-        "Exportable summaries to share with a doctor",
-      ]}
-    />
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        icon={ClipboardList}
+        title="Health History"
+        description="Your personal health profile — the details Medix and, eventually, emergency responders can draw on."
+      />
+
+      <ProfileCompletion percent={completion} />
+      <ProfileInfoSection />
+      <MedicationsManager />
+      <OtherInfoCard />
+      <EmergencyContactsManager />
+      <SharingPreferencesCard />
+
+      <MedicalDisclaimer />
+    </div>
   );
 }

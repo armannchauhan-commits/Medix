@@ -1,42 +1,16 @@
-import {
-  Activity,
-  FileText,
-  Pill,
-  type LucideIcon,
-} from "lucide-react";
-import type {
-  ActivityItem,
-  DemoUser,
-  EmergencyContactData,
-  HealthSnapshotData,
-} from "@/types";
+import { Activity, FileText, Pill } from "lucide-react";
+import type { ActivityItem, DemoUser } from "@/types";
 
 /**
- * Static, fictional demo-mode data for Step 1 of Medix.
- * None of this represents a real person or real medical information.
- * Later steps will replace this with data fetched from Supabase.
+ * Static, fictional demo-mode data that isn't part of the health profile.
+ * Health data itself (blood group, weight, medications, emergency
+ * contacts…) now lives in the persisted HealthProfile — see
+ * lib/health-profile.ts and lib/health-profile-context.tsx.
  */
 
 export const demoUser: DemoUser = {
   name: "Arman",
   email: "arman@demo.medix.app",
-  bloodGroup: "O+",
-  weightKg: 72,
-  medications: 2,
-  lastCheckup: "12 Aug 2026",
-};
-
-export const healthSnapshot: HealthSnapshotData = {
-  weightKg: demoUser.weightKg,
-  bloodGroup: demoUser.bloodGroup,
-  activeMedications: demoUser.medications,
-  lastCheckup: demoUser.lastCheckup,
-};
-
-export const emergencyContact: EmergencyContactData = {
-  name: "Demo Contact",
-  relation: "Primary contact",
-  phone: "+91 XXXXX XXXXX",
 };
 
 export const recentActivity: ActivityItem[] = [
@@ -62,5 +36,3 @@ export const recentActivity: ActivityItem[] = [
     icon: Pill,
   },
 ];
-
-export const iconIndex: Record<string, LucideIcon> = {};

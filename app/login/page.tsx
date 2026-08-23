@@ -32,7 +32,7 @@ export default function LoginPage() {
     if (!password) {
       next.password = "Enter your password.";
     } else if (password.length < 6) {
-      next.password = "Password must be at least 6 characters.";
+      next.password = "Password must be at least 8 characters.";
     }
     setErrors(next);
     return Object.keys(next).length === 0;

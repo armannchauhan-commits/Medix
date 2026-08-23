@@ -21,7 +21,8 @@ import { HealthSnapshot } from "@/components/HealthSnapshot";
 import { RecentActivity } from "@/components/RecentActivity";
 import { EmergencyContact } from "@/components/EmergencyContact";
 import { MedicalDisclaimer } from "@/components/MedicalDisclaimer";
-import { demoUser, healthSnapshot, recentActivity, emergencyContact } from "@/lib/demo-data";
+import { demoUser, recentActivity } from "@/lib/demo-data";
+import { useHealthProfile } from "@/lib/health-profile-context";
 import type { QuickAction } from "@/types";
 
 const quickActions: QuickAction[] = [
@@ -97,7 +98,9 @@ function useGreeting() {
 export default function DashboardPage() {
   const router = useRouter();
   const greeting = useGreeting();
+  const { profile } = useHealthProfile();
   const [symptomText, setSymptomText] = React.useState("");
+  const displayName = profile.personalInfo.name.trim() || demoUser.name;
 
   function handleCheckSymptoms(e: React.FormEvent) {
     e.preventDefault();
@@ -109,7 +112,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div>
         <h1 className="font-display text-2xl font-bold text-foreground sm:text-3xl">
-          {greeting}, {demoUser.name} 👋
+          {greeting}, {displayName} 👋
         </h1>
         <p className="mt-1.5 text-muted-foreground sm:text-lg">How are you feeling today?</p>
       </div>
@@ -159,14 +162,14 @@ export default function DashboardPage() {
       </div>
 
       {/* Snapshot */}
-      <HealthSnapshot data={healthSnapshot} />
+      <HealthSnapshot />
 
       {/* Activity + Emergency contact */}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <RecentActivity items={recentActivity} />
         </div>
-        <EmergencyContact contact={emergencyContact} />
+        <EmergencyContact />
       </div>
 
       <MedicalDisclaimer />
