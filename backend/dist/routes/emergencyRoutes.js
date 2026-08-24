@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const emergencyController_js_1 = require("../controllers/emergencyController.js");
+const router = (0, express_1.Router)();
+router.post("/sos", emergencyController_js_1.emergencyController.triggerSOS);
+router.get("/card/:id", emergencyController_js_1.emergencyController.getEmergencyCard);
+router.get("/logs", emergencyController_js_1.emergencyController.getEmergencyLogs);
+router.get("/status", emergencyController_js_1.emergencyController.getStatus);
+exports.default = router;

@@ -1,12 +1,10 @@
 "use client";
 
+import * as React from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { HeartPulse, User, Phone, AlertTriangle, Pill, Stethoscope, QrCode } from "lucide-react";
+import { HeartPulse, User, Phone, AlertTriangle, Pill, Stethoscope, QrCode, ExternalLink } from "lucide-react";
 import { useHealthProfile } from "@/lib/health-profile-context";
 import { cn } from "@/lib/utils";
-
-/** Safe, static placeholder value — intentionally contains no medical data. */
-const DEMO_QR_VALUE = "https://medix.app/emergency-card/demo";
 
 function Field({
   label,
@@ -37,6 +35,18 @@ export function EmergencyHealthCard({ className }: { className?: string }) {
   const { personalInfo, medicalInfo, medications, emergencyContacts, sharingPreferences } = profile;
   const primaryContact = emergencyContacts[0];
   const initials = personalInfo.name.trim().slice(0, 2).toUpperCase() || "MX";
+
+  const [baseUrl, setBaseUrl] = React.useState(
+    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+  );
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && window.location.origin) {
+      setBaseUrl(process.env.NEXT_PUBLIC_APP_URL || window.location.origin);
+    }
+  }, []);
+
+  const emergencyQrUrl = `${baseUrl}/emergency/demo-user`;
 
   return (
     <div
@@ -156,19 +166,28 @@ export function EmergencyHealthCard({ className }: { className?: string }) {
           )}
         </Field>
 
-        {/* QR code */}
-        <div className="flex items-center gap-4 rounded-xl bg-white/10 p-4">
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-white p-2">
-            <QRCodeSVG value={DEMO_QR_VALUE} size={64} bgColor="#ffffff" fgColor="#0f172a" />
+        {/* Dynamic QR code with configurable destination */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-xl bg-white/10 p-4">
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-white p-2 shadow-sm">
+            <QRCodeSVG value={emergencyQrUrl} size={64} bgColor="#ffffff" fgColor="#0f172a" />
           </div>
-          <div>
+          <div className="flex flex-col gap-1">
             <p className="flex items-center gap-1.5 text-sm font-semibold">
               <QrCode className="h-4 w-4" aria-hidden="true" />
               Scan for Emergency Information
             </p>
-            <p className="mt-1 text-xs text-white/60">
-              Demo identifier only — no medical data is stored in this code.
+            <p className="text-xs text-white/70 break-all">
+              Points to Medix emergency portal:
             </p>
+            <a
+              href={emergencyQrUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-accent underline underline-offset-2 hover:text-white"
+            >
+              <span>{emergencyQrUrl}</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
           </div>
         </div>
       </div>

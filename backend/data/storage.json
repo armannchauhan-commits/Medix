@@ -1,0 +1,179 @@
+{
+  "contacts": [
+    {
+      "id": "contact-1",
+      "name": "Priya Sharma",
+      "relationship": "Spouse",
+      "phone": "+91 98765 43210",
+      "isPrimary": true,
+      "createdAt": "2026-08-24T16:52:31.510Z"
+    },
+    {
+      "name": "Rahul Verma",
+      "relationship": "Brother",
+      "phone": "+91 91234 56789",
+      "isPrimary": false,
+      "id": "contact-1787590395230-dkuy0x",
+      "createdAt": "2026-08-24T16:53:15.230Z",
+      "updatedAt": "2026-08-24T16:53:15.230Z"
+    }
+  ],
+  "emergencyLogs": [
+    {
+      "success": true,
+      "alertId": "sos-1787591544143-426eyq",
+      "timestamp": "2026-08-24T17:12:24.143Z",
+      "status": "unconfigured",
+      "message": "SOS activated and logged. SMS gateway is not configured (demo mode active).",
+      "userName": "Aarav Sharma",
+      "location": {
+        "latitude": 28.474188094980498,
+        "longitude": 77.47637601599135,
+        "accuracy": 120
+      },
+      "mapsUrl": "https://www.google.com/maps?q=28.474188094980498,77.47637601599135",
+      "contactsNotified": [
+        {
+          "contactId": "contact-1",
+          "name": "Priya Sharma",
+          "phone": "+91 98765 43210",
+          "relationship": "Spouse",
+          "status": "unconfigured",
+          "error": "SMS provider is not configured. Add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER to backend/.env to enable live cellular dispatch."
+        },
+        {
+          "contactId": "contact-1787590395230-dkuy0x",
+          "name": "Rahul Verma",
+          "phone": "+91 91234 56789",
+          "relationship": "Brother",
+          "status": "unconfigured",
+          "error": "SMS provider is not configured. Add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER to backend/.env to enable live cellular dispatch."
+        }
+      ],
+      "smsProviderConfigured": false,
+      "emergencyCardUrl": "http://localhost:3000/emergency/demo-user"
+    },
+    {
+      "success": true,
+      "alertId": "sos-1787591541463-aoaaxh",
+      "timestamp": "2026-08-24T17:12:21.463Z",
+      "status": "unconfigured",
+      "message": "SOS activated and logged. SMS gateway is not configured (demo mode active).",
+      "userName": "Aarav Sharma",
+      "location": null,
+      "mapsUrl": null,
+      "contactsNotified": [
+        {
+          "contactId": "contact-1",
+          "name": "Priya Sharma",
+          "phone": "+91 98765 43210",
+          "relationship": "Spouse",
+          "status": "unconfigured",
+          "error": "SMS provider is not configured. Add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER to backend/.env to enable live cellular dispatch."
+        },
+        {
+          "contactId": "contact-1787590395230-dkuy0x",
+          "name": "Rahul Verma",
+          "phone": "+91 91234 56789",
+          "relationship": "Brother",
+          "status": "unconfigured",
+          "error": "SMS provider is not configured. Add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER to backend/.env to enable live cellular dispatch."
+        }
+      ],
+      "smsProviderConfigured": false,
+      "emergencyCardUrl": "http://localhost:3000/emergency/demo-user"
+    },
+    {
+      "success": true,
+      "alertId": "sos-1787590395253-4piauk",
+      "timestamp": "2026-08-24T16:53:15.253Z",
+      "status": "unconfigured",
+      "message": "SOS activated and logged. SMS gateway is not configured (demo mode active).",
+      "userName": "Aarav Sharma",
+      "location": {
+        "latitude": 12.9716,
+        "longitude": 77.5946,
+        "accuracy": 10,
+        "address": "Bengaluru, Karnataka, India"
+      },
+      "mapsUrl": "https://www.google.com/maps?q=12.9716,77.5946",
+      "contactsNotified": [
+        {
+          "contactId": "contact-1",
+          "name": "Priya Sharma",
+          "phone": "+91 98765 43210",
+          "relationship": "Spouse",
+          "status": "unconfigured",
+          "error": "SMS provider is not configured. Add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER to backend/.env to enable live cellular dispatch."
+        },
+        {
+          "contactId": "contact-1787590395230-dkuy0x",
+          "name": "Rahul Verma",
+          "phone": "+91 91234 56789",
+          "relationship": "Brother",
+          "status": "unconfigured",
+          "error": "SMS provider is not configured. Add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER to backend/.env to enable live cellular dispatch."
+        }
+      ],
+      "smsProviderConfigured": false,
+      "emergencyCardUrl": "http://localhost:3000/emergency/demo-user"
+    }
+  ],
+  "healthProfiles": {
+    "demo-user": {
+      "id": "demo-user",
+      "personalInfo": {
+        "name": "Aarav Sharma",
+        "age": 29,
+        "gender": "Male"
+      },
+      "medicalInfo": {
+        "bloodGroup": "O+",
+        "allergies": [
+          "Penicillin",
+          "Dust Mites"
+        ],
+        "conditions": [
+          "Asthma (mild)",
+          "Hypertension"
+        ],
+        "notes": "Carries inhaler in bag.",
+        "lastCheckup": "12 Aug 2026"
+      },
+      "medications": [
+        {
+          "id": "med-1",
+          "name": "Salbutamol Inhaler",
+          "dosage": "100 mcg",
+          "frequency": "As needed"
+        },
+        {
+          "id": "med-2",
+          "name": "Amlodipine",
+          "dosage": "5 mg",
+          "frequency": "Once daily (morning)"
+        }
+      ],
+      "emergencyContacts": [
+        {
+          "name": "Priya Sharma",
+          "relationship": "Spouse",
+          "phone": "+91 98765 43210"
+        },
+        {
+          "name": "Rahul Verma",
+          "relationship": "Brother",
+          "phone": "+91 91234 56789"
+        }
+      ],
+      "sharingPreferences": {
+        "bloodGroup": true,
+        "allergies": true,
+        "medications": true,
+        "conditions": true,
+        "emergencyContacts": true
+      },
+      "updatedAt": "2026-08-24T16:52:31.511Z"
+    }
+  }
+}

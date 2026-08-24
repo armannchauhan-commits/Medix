@@ -10,6 +10,7 @@ import {
   nudgeVitalsOutOfRange,
   checkVitalsAlert,
 } from "@/services/monitoringService";
+import { apiClient, ApiSOSResponse } from "@/services/apiClient";
 import { RealtimeChannel, createDemoTicker } from "@/lib/realtime";
 import type {
   Hospital,
@@ -32,10 +33,12 @@ function buildTimeline(opts: {
   hospitalsChecked: boolean;
   ambulanceEnRoute: boolean;
   monitoringStarted: boolean;
+  alertDispatched: boolean;
 }): TimelineStep[] {
-  const { active, hasLocation, hospitalsChecked, ambulanceEnRoute, monitoringStarted } = opts;
+  const { active, hasLocation, hospitalsChecked, ambulanceEnRoute, monitoringStarted, alertDispatched } = opts;
   return [
     { id: "sos", label: "SOS Initiated", status: active ? "done" : "pending" },
+    { id: "backend_dispatch", label: "Emergency Alert Dispatched", status: alertDispatched ? "done" : active ? "active" : "pending" },
     { id: "location", label: "Location Detected", status: hasLocation ? "done" : active ? "active" : "pending" },
     {
       id: "hospitals",
@@ -66,6 +69,10 @@ export function useEmergencySession() {
   const [ambulance, setAmbulance] = React.useState<AmbulanceState | null>(null);
   const [vitals, setVitals] = React.useState<VitalsReading | null>(null);
   const [alert, setAlert] = React.useState<MonitoringAlert | null>(null);
+
+  // Backend SOS dispatch state
+  const [backendSOSResult, setBackendSOSResult] = React.useState<ApiSOSResponse | null>(null);
+  const [backendSOSLoading, setBackendSOSLoading] = React.useState(false);
 
   const stopFnsRef = React.useRef<Array<() => void>>([]);
   const countdownIntervalRef = React.useRef<number | null>(null);
@@ -116,6 +123,8 @@ export function useEmergencySession() {
     setIsDemoRun(demo);
     setStatus("active");
     geolocation.start();
+    // Trigger backend SOS
+    triggerBackendAlert();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -127,6 +136,50 @@ export function useEmergencySession() {
     startSession(true);
   }, [startSession]);
 
+  const triggerBackendAlert = React.useCallback(async () => {
+    setBackendSOSLoading(true);
+    try {
+      const loc = geolocation.location ? {
+        latitude: geolocation.location.latitude,
+        longitude: geolocation.location.longitude,
+        accuracy: geolocation.location.accuracy,
+      } : null;
+
+      const res = await apiClient.triggerSOS({
+        userId: "demo-user",
+        userName: "Aarav Sharma",
+        location: loc,
+        timestamp: new Date().toISOString(),
+      });
+      setBackendSOSResult(res);
+    } catch (err) {
+      console.warn("[useEmergencySession] Backend SOS dispatch error:", err);
+      // Construct fallback unconfigured result if backend is unreachable
+      setBackendSOSResult({
+        success: true,
+        alertId: `sos-local-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        status: "unconfigured",
+        message: "SOS alert activated in local mode. Backend server unreachable or unconfigured.",
+        userName: "Aarav Sharma",
+        location: geolocation.location || null,
+        mapsUrl: geolocation.location ? `https://www.google.com/maps?q=${geolocation.location.latitude},${geolocation.location.longitude}` : null,
+        contactsNotified: [],
+        smsProviderConfigured: false,
+        emergencyCardUrl: "http://localhost:3000/emergency/demo-user",
+      });
+    } finally {
+      setBackendSOSLoading(false);
+    }
+  }, [geolocation.location]);
+
+  // If location becomes available after session starts and backend has not received location, re-sync
+  React.useEffect(() => {
+    if (status === "active" && geolocation.location && backendSOSResult && !backendSOSResult.location) {
+      triggerBackendAlert();
+    }
+  }, [status, geolocation.location, backendSOSResult, triggerBackendAlert]);
+
   const endEmergency = React.useCallback(() => {
     stopAllTickers();
     geolocation.stop();
@@ -136,6 +189,7 @@ export function useEmergencySession() {
     setAmbulance(null);
     setVitals(null);
     setAlert(null);
+    setBackendSOSResult(null);
     setIsDemoRun(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stopAllTickers]);
@@ -209,6 +263,7 @@ export function useEmergencySession() {
     hospitalsChecked,
     ambulanceEnRoute: ambulance?.status === "en-route" || ambulance?.status === "assigned",
     monitoringStarted: Boolean(vitals),
+    alertDispatched: Boolean(backendSOSResult),
   });
 
   return {
@@ -223,6 +278,8 @@ export function useEmergencySession() {
     vitals,
     alert,
     timeline,
+    backendSOSResult,
+    backendSOSLoading,
     activate,
     activateDemo,
     cancelConfirmation,

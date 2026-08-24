@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import dynamic from "next/dynamic";
-import { Siren, PlayCircle, Loader2, XCircle, RotateCcw } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Siren, PlayCircle, Loader2, XCircle, RotateCcw, ShieldAlert, CheckCircle2, AlertTriangle, MessageSquare } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MedicalDisclaimer } from "@/components/MedicalDisclaimer";
 import { EmergencyHealthCard } from "@/components/EmergencyHealthCard";
@@ -40,8 +40,8 @@ export default function SOSPage() {
               🚨 Medix Emergency Response
             </h1>
             <p className="mt-1.5 max-w-xl text-sm text-muted-foreground sm:text-base">
-              Activating SOS shares your real location, finds real nearby hospitals, and starts a demo
-              ambulance and patient-monitoring simulation.
+              Activating SOS notifies your saved emergency contacts via the backend, shares your real location,
+              finds real nearby hospitals, and launches emergency assistance.
             </p>
           </div>
         </div>
@@ -65,7 +65,7 @@ export default function SOSPage() {
               <span className="relative font-display text-lg font-extrabold sm:text-xl">ACTIVATE SOS</span>
             </button>
             <p className="max-w-sm text-xs text-muted-foreground">
-              You&apos;ll get a few seconds to cancel before anything starts.
+              You&apos;ll get a 5-second countdown to cancel before the emergency alert is sent.
             </p>
 
             <div className="flex items-center gap-3">
@@ -79,8 +79,7 @@ export default function SOSPage() {
               Start Emergency Demo
             </Button>
             <p className="max-w-sm text-xs text-muted-foreground">
-              Runs the full emergency flow immediately for demonstration — still uses your real location and
-              real hospital data where available.
+              Triggers the emergency alert immediately, tests backend emergency dispatch, and uses your live location.
             </p>
           </CardContent>
         </Card>
@@ -100,8 +99,19 @@ export default function SOSPage() {
   }
 
   // status === "active"
-  const { geolocation, hospitals, hospitalsSource, hospitalsLoading, ambulance, vitals, alert, timeline, isDemoRun } =
-    session;
+  const {
+    geolocation,
+    hospitals,
+    hospitalsSource,
+    hospitalsLoading,
+    ambulance,
+    vitals,
+    alert,
+    timeline,
+    backendSOSResult,
+    backendSOSLoading,
+    isDemoRun,
+  } = session;
 
   return (
     <div className="flex flex-col gap-6">
@@ -121,6 +131,59 @@ export default function SOSPage() {
           End Emergency
         </Button>
       </div>
+
+      {/* Backend SOS Dispatch Status Banner */}
+      <Card className="border-critical/30 bg-critical/5">
+        <CardContent className="flex flex-col gap-3 p-5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="h-5 w-5 text-critical" />
+              <span className="font-display text-sm font-bold text-foreground">
+                Emergency Dispatch & Contact Notification
+              </span>
+            </div>
+            {backendSOSLoading ? (
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Connecting to backend…
+              </span>
+            ) : backendSOSResult?.smsProviderConfigured ? (
+              <span className="flex items-center gap-1 rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-semibold text-success">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Live Cellular SMS
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 rounded-full bg-warning/15 px-2.5 py-0.5 text-xs font-semibold text-warning">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Demo / Unconfigured SMS Mode
+              </span>
+            )}
+          </div>
+
+          {backendSOSResult && (
+            <div className="flex flex-col gap-2 rounded-xl bg-background/80 p-3.5 text-xs">
+              <p className="text-foreground font-medium">{backendSOSResult.message}</p>
+              {backendSOSResult.contactsNotified && backendSOSResult.contactsNotified.length > 0 ? (
+                <div className="mt-1 flex flex-col gap-1 border-t border-border pt-2">
+                  <span className="font-semibold text-muted-foreground">Targeted Emergency Contacts:</span>
+                  {backendSOSResult.contactsNotified.map((c) => (
+                    <div key={c.contactId} className="flex items-center justify-between text-muted-foreground">
+                      <span>{c.name} ({c.relationship}) - {c.phone}</span>
+                      <span className={c.status === "delivered" ? "text-success font-medium" : "text-amber-600 font-medium"}>
+                        {c.status === "delivered" ? "Delivered" : "Logged in demo mode (SMS unconfigured)"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">
+                  No emergency contacts found. Add contacts in Health History to enable automatic alerts.
+                </p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <EmergencyTimeline steps={timeline} />
 

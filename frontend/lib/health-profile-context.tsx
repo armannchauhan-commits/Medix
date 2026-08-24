@@ -14,6 +14,7 @@ import {
   defaultHealthProfile,
   generateId,
 } from "@/lib/health-profile";
+import { apiClient } from "@/services/apiClient";
 
 interface HealthProfileContextValue {
   profile: HealthProfile;
@@ -28,9 +29,10 @@ interface HealthProfileContextValue {
   removeVaccination: (value: string) => void;
   addMedication: (medication: Omit<Medication, "id">) => void;
   removeMedication: (id: string) => void;
-  addContact: (contact: Omit<EmergencyContactRecord, "id">) => void;
-  updateContact: (id: string, contact: Omit<EmergencyContactRecord, "id">) => void;
-  removeContact: (id: string) => void;
+  addContact: (contact: Omit<EmergencyContactRecord, "id">) => Promise<void>;
+  updateContact: (id: string, contact: Omit<EmergencyContactRecord, "id">) => Promise<void>;
+  removeContact: (id: string) => Promise<void>;
+  refreshContactsFromBackend: () => Promise<void>;
   updateSharingPreferences: (prefs: SharingPreferences) => void;
 }
 
@@ -47,7 +49,7 @@ export function HealthProfileProvider({ children }: { children: React.ReactNode 
   const [profile, setProfile] = React.useState<HealthProfile>(defaultHealthProfile);
   const [isHydrated, setIsHydrated] = React.useState(false);
 
-  // Load any saved profile once, on mount (client-only — localStorage doesn't exist on the server).
+  // Load any saved profile once, on mount
   React.useEffect(() => {
     try {
       const raw = window.localStorage.getItem(HEALTH_PROFILE_STORAGE_KEY);
@@ -56,19 +58,45 @@ export function HealthProfileProvider({ children }: { children: React.ReactNode 
         setProfile(parsed);
       }
     } catch {
-      // Corrupt or missing localStorage data — fall back to the demo defaults already in state.
+      // Corrupt or missing localStorage data
     } finally {
       setIsHydrated(true);
     }
   }, []);
 
-  // Persist on every change, after the initial hydration read completes.
+  // Sync contacts from backend on mount
+  const refreshContactsFromBackend = React.useCallback(async () => {
+    try {
+      const backendContacts = await apiClient.getContacts();
+      if (backendContacts && backendContacts.length > 0) {
+        setProfile((prev) => ({
+          ...prev,
+          emergencyContacts: backendContacts.map((c) => ({
+            id: c.id,
+            name: c.name,
+            relationship: c.relationship,
+            phone: c.phone,
+          })),
+        }));
+      }
+    } catch {
+      // Backend not running or unreachable — local state / storage remains active
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (isHydrated) {
+      refreshContactsFromBackend();
+    }
+  }, [isHydrated, refreshContactsFromBackend]);
+
+  // Persist on every change
   React.useEffect(() => {
     if (!isHydrated) return;
     try {
       window.localStorage.setItem(HEALTH_PROFILE_STORAGE_KEY, JSON.stringify(profile));
     } catch {
-      // Storage full or unavailable (e.g. private browsing) — changes just won't persist across reloads.
+      // Storage unavailable
     }
   }, [profile, isHydrated]);
 
@@ -129,27 +157,48 @@ export function HealthProfileProvider({ children }: { children: React.ReactNode 
           ...prev,
           medications: prev.medications.filter((m) => m.id !== id),
         })),
-      addContact: (contact) =>
+      addContact: async (contact) => {
+        let createdId = generateId("contact");
+        try {
+          const created = await apiClient.createContact(contact);
+          if (created && created.id) createdId = created.id;
+        } catch (err) {
+          console.warn("[HealthProfile] Backend create failed, saving locally:", err);
+        }
         setProfile((prev) => ({
           ...prev,
-          emergencyContacts: [...prev.emergencyContacts, { ...contact, id: generateId("contact") }],
-        })),
-      updateContact: (id, contact) =>
+          emergencyContacts: [...prev.emergencyContacts, { ...contact, id: createdId }],
+        }));
+      },
+      updateContact: async (id, contact) => {
+        try {
+          await apiClient.updateContact(id, contact);
+        } catch (err) {
+          console.warn("[HealthProfile] Backend update failed, saving locally:", err);
+        }
         setProfile((prev) => ({
           ...prev,
           emergencyContacts: prev.emergencyContacts.map((c) =>
             c.id === id ? { ...contact, id } : c
           ),
-        })),
-      removeContact: (id) =>
+        }));
+      },
+      removeContact: async (id) => {
+        try {
+          await apiClient.deleteContact(id);
+        } catch (err) {
+          console.warn("[HealthProfile] Backend delete failed, removing locally:", err);
+        }
         setProfile((prev) => ({
           ...prev,
           emergencyContacts: prev.emergencyContacts.filter((c) => c.id !== id),
-        })),
+        }));
+      },
+      refreshContactsFromBackend,
       updateSharingPreferences: (prefs) =>
         setProfile((prev) => ({ ...prev, sharingPreferences: prefs })),
     }),
-    [profile, isHydrated]
+    [profile, isHydrated, refreshContactsFromBackend]
   );
 
   return (

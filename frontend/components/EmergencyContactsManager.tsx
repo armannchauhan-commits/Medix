@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Users, Plus, Pencil, Trash2, Save, X, Phone } from "lucide-react";
+import { Users, Plus, Pencil, Trash2, Save, X, Phone, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,9 +20,10 @@ interface ContactFormProps {
   onSave: () => void;
   onCancel: () => void;
   errors: Partial<Record<keyof Draft, string>>;
+  saving?: boolean;
 }
 
-function ContactForm({ draft, onChange, onSave, onCancel, errors }: ContactFormProps) {
+function ContactForm({ draft, onChange, onSave, onCancel, errors, saving }: ContactFormProps) {
   return (
     <div className="grid gap-3 rounded-xl border border-dashed border-border p-4 sm:grid-cols-3">
       <div className="flex flex-col gap-1.5">
@@ -31,7 +32,9 @@ function ContactForm({ draft, onChange, onSave, onCancel, errors }: ContactFormP
         </Label>
         <Input
           id="contact-name"
+          placeholder="Contact Name"
           value={draft.name}
+          disabled={saving}
           onChange={(e) => onChange({ ...draft, name: e.target.value })}
           aria-invalid={Boolean(errors.name)}
         />
@@ -45,6 +48,7 @@ function ContactForm({ draft, onChange, onSave, onCancel, errors }: ContactFormP
           id="contact-relationship"
           placeholder="Parent, Spouse, Friend…"
           value={draft.relationship}
+          disabled={saving}
           onChange={(e) => onChange({ ...draft, relationship: e.target.value })}
           aria-invalid={Boolean(errors.relationship)}
         />
@@ -59,17 +63,22 @@ function ContactForm({ draft, onChange, onSave, onCancel, errors }: ContactFormP
           type="tel"
           placeholder="+91 XXXXX XXXXX"
           value={draft.phone}
+          disabled={saving}
           onChange={(e) => onChange({ ...draft, phone: e.target.value })}
           aria-invalid={Boolean(errors.phone)}
         />
         {errors.phone && <p className="text-xs font-medium text-critical">{errors.phone}</p>}
       </div>
       <div className="flex gap-2 sm:col-span-3">
-        <Button size="sm" onClick={onSave}>
-          <Save className="h-3.5 w-3.5" aria-hidden="true" />
-          Save Contact
+        <Button size="sm" onClick={onSave} disabled={saving}>
+          {saving ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+          ) : (
+            <Save className="h-3.5 w-3.5" aria-hidden="true" />
+          )}
+          {saving ? "Saving…" : "Save Contact"}
         </Button>
-        <Button size="sm" variant="outline" onClick={onCancel}>
+        <Button size="sm" variant="outline" onClick={onCancel} disabled={saving}>
           <X className="h-3.5 w-3.5" aria-hidden="true" />
           Cancel
         </Button>
@@ -85,6 +94,7 @@ export function EmergencyContactsManager() {
   const [addingNew, setAddingNew] = React.useState(false);
   const [newDraft, setNewDraft] = React.useState<Draft>(emptyDraft);
   const [newErrors, setNewErrors] = React.useState<Partial<Record<keyof Draft, string>>>({});
+  const [isSaving, setIsSaving] = React.useState(false);
 
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [editDraft, setEditDraft] = React.useState<Draft>(emptyDraft);
@@ -97,19 +107,27 @@ export function EmergencyContactsManager() {
     if (!draft.phone.trim()) {
       errors.phone = "Phone number is required.";
     } else if (!isValidPhone(draft.phone)) {
-      errors.phone = "Enter a valid phone number.";
+      errors.phone = "Enter a valid phone number (e.g. +91 98765 43210).";
     }
     return errors;
   }
 
-  function handleAddNew() {
+  async function handleAddNew() {
     const errors = validate(newDraft);
     setNewErrors(errors);
     if (Object.keys(errors).length > 0) return;
-    addContact(newDraft);
-    setNewDraft(emptyDraft);
-    setAddingNew(false);
-    toast("Emergency contact added.");
+
+    setIsSaving(true);
+    try {
+      await addContact(newDraft);
+      setNewDraft(emptyDraft);
+      setAddingNew(false);
+      toast("Emergency contact saved to backend.");
+    } catch {
+      toast("Failed to save contact.", "error");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   function startEdit(contact: EmergencyContactRecord) {
@@ -118,19 +136,31 @@ export function EmergencyContactsManager() {
     setEditErrors({});
   }
 
-  function handleSaveEdit() {
+  async function handleSaveEdit() {
     if (!editingId) return;
     const errors = validate(editDraft);
     setEditErrors(errors);
     if (Object.keys(errors).length > 0) return;
-    updateContact(editingId, editDraft);
-    setEditingId(null);
-    toast("Emergency contact updated.");
+
+    setIsSaving(true);
+    try {
+      await updateContact(editingId, editDraft);
+      setEditingId(null);
+      toast("Emergency contact updated.");
+    } catch {
+      toast("Failed to update contact.", "error");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
-  function handleRemove(contact: EmergencyContactRecord) {
-    removeContact(contact.id);
-    toast(`${contact.name} removed from emergency contacts.`);
+  async function handleRemove(contact: EmergencyContactRecord) {
+    try {
+      await removeContact(contact.id);
+      toast(`${contact.name} removed from emergency contacts.`);
+    } catch {
+      toast("Failed to remove contact.", "error");
+    }
   }
 
   return (
@@ -172,6 +202,7 @@ export function EmergencyContactsManager() {
                   onSave={handleSaveEdit}
                   onCancel={() => setEditingId(null)}
                   errors={editErrors}
+                  saving={isSaving}
                 />
               </li>
             ) : (
@@ -214,11 +245,12 @@ export function EmergencyContactsManager() {
             onSave={handleAddNew}
             onCancel={() => setAddingNew(false)}
             errors={newErrors}
+            saving={isSaving}
           />
         )}
 
         <p className="text-xs text-muted-foreground">
-          Emergency contacts may be notified when the user activates SOS.
+          Emergency contacts will receive SMS notifications and your live GPS location when you activate SOS.
         </p>
       </CardContent>
     </Card>
