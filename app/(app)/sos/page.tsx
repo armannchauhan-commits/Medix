@@ -1,117 +1,161 @@
 "use client";
 
-import Link from "next/link";
-import { Siren, Phone, MapPin, Sparkles, Users, Plus } from "lucide-react";
+import * as React from "react";
+import dynamic from "next/dynamic";
+import { Siren, PlayCircle, Loader2, XCircle, RotateCcw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { MedicalDisclaimer } from "@/components/MedicalDisclaimer";
-import { useHealthProfile } from "@/lib/health-profile-context";
+import { EmergencyHealthCard } from "@/components/EmergencyHealthCard";
+import { SOSConfirmation } from "@/components/emergency/SOSConfirmation";
+import { EmergencyTimeline } from "@/components/emergency/EmergencyTimeline";
+import { LocationCard } from "@/components/emergency/LocationCard";
+import { HospitalList } from "@/components/emergency/HospitalList";
+import { AmbulanceTracker } from "@/components/emergency/AmbulanceTracker";
+import { PatientMonitor } from "@/components/emergency/PatientMonitor";
+import { EmergencyContactActions } from "@/components/emergency/EmergencyContactActions";
+import { useEmergencySession } from "@/lib/use-emergency-session";
 
-const upcoming = [
-  {
-    icon: Phone,
-    title: "One-tap emergency dispatch",
-    description: "Alert local emergency services the moment you tap SOS.",
-  },
-  {
-    icon: MapPin,
-    title: "Live location sharing",
-    description: "Share your exact location with responders and your contacts.",
-  },
-  {
-    icon: Users,
-    title: "Automatic contact alerts",
-    description: "Notify your emergency contacts the instant SOS is triggered.",
-  },
-];
+const EmergencyMap = dynamic(() => import("@/components/emergency/EmergencyMap").then((m) => m.EmergencyMap), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full min-h-[280px] w-full items-center justify-center rounded-2xl bg-muted/50">
+      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" aria-hidden="true" />
+    </div>
+  ),
+});
 
 export default function SOSPage() {
-  const { profile } = useHealthProfile();
-  const contact = profile.emergencyContacts[0];
+  const session = useEmergencySession();
+
+  if (session.status === "idle" || session.status === "ended") {
+    return (
+      <div className="flex flex-col gap-6">
+        <div className="flex items-start gap-3.5">
+          <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-critical/10 text-critical">
+            <Siren className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div>
+            <h1 className="font-display text-2xl font-bold text-foreground sm:text-3xl">
+              🚨 Medix Emergency Response
+            </h1>
+            <p className="mt-1.5 max-w-xl text-sm text-muted-foreground sm:text-base">
+              Activating SOS shares your real location, finds real nearby hospitals, and starts a demo
+              ambulance and patient-monitoring simulation.
+            </p>
+          </div>
+        </div>
+
+        {session.status === "ended" && (
+          <div className="flex items-center gap-2.5 rounded-xl border border-success/25 bg-success/10 px-4 py-3 text-sm text-success">
+            <XCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+            Emergency session ended. Location tracking has stopped.
+          </div>
+        )}
+
+        <Card className="border-critical/25">
+          <CardContent className="flex flex-col items-center gap-5 p-8 text-center sm:p-10">
+            <button
+              type="button"
+              onClick={session.activate}
+              className="group relative flex h-40 w-40 flex-col items-center justify-center gap-1 rounded-full bg-critical text-critical-foreground shadow-sos-glow transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-critical/40 sm:h-48 sm:w-48"
+            >
+              <span className="absolute inset-0 rounded-full bg-critical/50 animate-pulse-ring" aria-hidden="true" />
+              <Siren className="relative h-9 w-9" aria-hidden="true" />
+              <span className="relative font-display text-lg font-extrabold sm:text-xl">ACTIVATE SOS</span>
+            </button>
+            <p className="max-w-sm text-xs text-muted-foreground">
+              You&apos;ll get a few seconds to cancel before anything starts.
+            </p>
+
+            <div className="flex items-center gap-3">
+              <div className="h-px w-10 bg-border" aria-hidden="true" />
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">or</span>
+              <div className="h-px w-10 bg-border" aria-hidden="true" />
+            </div>
+
+            <Button variant="outline" size="lg" onClick={session.activateDemo}>
+              <PlayCircle className="h-4 w-4" aria-hidden="true" />
+              Start Emergency Demo
+            </Button>
+            <p className="max-w-sm text-xs text-muted-foreground">
+              Runs the full emergency flow immediately for demonstration — still uses your real location and
+              real hospital data where available.
+            </p>
+          </CardContent>
+        </Card>
+
+        <MedicalDisclaimer />
+      </div>
+    );
+  }
+
+  if (session.status === "confirming") {
+    return (
+      <div className="flex flex-col gap-6">
+        <SOSConfirmation countdown={session.countdown} onCancel={session.cancelConfirmation} />
+        <MedicalDisclaimer />
+      </div>
+    );
+  }
+
+  // status === "active"
+  const { geolocation, hospitals, hospitalsSource, hospitalsLoading, ambulance, vitals, alert, timeline, isDemoRun } =
+    session;
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-start gap-3.5">
-        <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-critical/10 text-critical">
-          <Siren className="h-5 w-5" aria-hidden="true" />
-        </span>
-        <div>
-          <h1 className="font-display text-2xl font-bold text-foreground sm:text-3xl">
-            Emergency SOS
-          </h1>
-          <p className="mt-1.5 max-w-xl text-sm text-muted-foreground sm:text-base">
-            This is the foundation for Medix&apos;s emergency response. Live
-            dispatch and location sharing are being built in a later step.
-          </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="relative flex h-3 w-3">
+            <span className="absolute inset-0 animate-ping rounded-full bg-critical/60" aria-hidden="true" />
+            <span className="relative h-3 w-3 rounded-full bg-critical" aria-hidden="true" />
+          </span>
+          <h1 className="font-display text-xl font-bold text-critical sm:text-2xl">🚨 Emergency Active</h1>
+          {isDemoRun && (
+            <span className="rounded-full bg-warning/10 px-2.5 py-1 text-xs font-bold text-warning">DEMO RUN</span>
+          )}
         </div>
+        <Button variant="outline" size="sm" onClick={session.endEmergency}>
+          <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+          End Emergency
+        </Button>
       </div>
 
-      <Card className="border-critical/25 bg-critical-soft">
-        <CardContent className="flex flex-col items-start gap-5 p-8 sm:p-10">
-          <Badge variant="critical" className="gap-1.5">
-            <Sparkles className="h-3 w-3" aria-hidden="true" />
-            Coming Soon
-          </Badge>
-          <div>
-            <h2 className="font-display text-xl font-bold text-foreground sm:text-2xl">
-              Emergency dispatch isn&apos;t connected yet
-            </h2>
-            <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-              In this step, SOS is UI-only. Once hospital, ambulance and
-              location APIs are wired up, this page will actually reach help.
-            </p>
+      <EmergencyTimeline steps={timeline} />
+
+      <div className="h-72 sm:h-80 lg:h-96">
+        {geolocation.location ? (
+          <EmergencyMap userLocation={geolocation.location} hospitals={hospitals} ambulance={ambulance} />
+        ) : (
+          <div className="flex h-full items-center justify-center rounded-2xl bg-muted/50 px-6 text-center text-sm text-muted-foreground">
+            {geolocation.permission === "denied" || geolocation.permission === "unsupported"
+              ? "The map needs location access to show your area."
+              : "Locating you…"}
           </div>
+        )}
+      </div>
 
-          <ul className="grid w-full gap-3 sm:grid-cols-3">
-            {upcoming.map(({ icon: Icon, title, description }) => (
-              <li
-                key={title}
-                className="flex flex-col gap-2.5 rounded-xl border border-critical/20 bg-card px-4 py-4"
-              >
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-critical/10 text-critical">
-                  <Icon className="h-4.5 w-4.5" aria-hidden="true" />
-                </span>
-                <p className="text-sm font-semibold text-foreground">{title}</p>
-                <p className="text-xs leading-relaxed text-muted-foreground">{description}</p>
-              </li>
-            ))}
-          </ul>
+      <LocationCard
+        location={geolocation.location}
+        permission={geolocation.permission}
+        error={geolocation.error}
+        onRefresh={geolocation.refresh}
+        onRecenter={geolocation.refresh}
+        onStop={session.endEmergency}
+      />
 
-          <Button variant="critical" size="lg" disabled className="mt-2 cursor-not-allowed">
-            <Siren className="h-4 w-4" aria-hidden="true" />
-            Trigger Emergency Dispatch
-          </Button>
-          <p className="-mt-3 text-xs text-muted-foreground">
-            Disabled in Step 1 — no real emergency request is sent.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <AmbulanceTracker ambulance={ambulance} />
+        <PatientMonitor vitals={vitals} alert={alert} />
+      </div>
 
-      <Card>
-        <CardContent className="flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-7">
-          <div>
-            <p className="text-sm font-semibold text-foreground">
-              Your emergency contact
-            </p>
-            <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
-              {contact ? `${contact.name} · ${contact.phone}` : "No emergency contact added yet."}
-            </p>
-          </div>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/health-history">
-              {contact ? (
-                "Manage Contacts"
-              ) : (
-                <>
-                  <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                  Add Contact
-                </>
-              )}
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
+      <HospitalList hospitals={hospitals} source={hospitalsSource} loading={hospitalsLoading} />
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <EmergencyContactActions location={geolocation.location} />
+        <EmergencyHealthCard />
+      </div>
 
       <MedicalDisclaimer />
     </div>

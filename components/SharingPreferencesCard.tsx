@@ -50,11 +50,11 @@ export function SharingPreferencesCard() {
         <ul className="flex flex-col divide-y divide-border">
           {rows.map(({ key, label }) => (
             <li key={key} className="flex items-center justify-between py-3">
-              <Label htmlFor={`share-${key}`} className="text-sm font-medium text-foreground">
+              <Label htmlFor={`share-${String(key)}`} className="text-sm font-medium text-foreground">
                 {label}
               </Label>
               <Switch
-                id={`share-${key}`}
+                id={`share-${String(key)}`}
                 checked={draft[key]}
                 onCheckedChange={(checked) => setDraft((d) => ({ ...d, [key]: checked }))}
                 aria-label={`Share ${label} during SOS`}

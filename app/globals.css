@@ -26,6 +26,12 @@
     --warning: 32 95% 44%;
     --warning-foreground: 0 0% 100%;
 
+    --success: 152 69% 31%;
+    --success-foreground: 0 0% 100%;
+
+    --highrisk: 25 95% 48%;
+    --highrisk-foreground: 0 0% 100%;
+
     --critical: 0 72% 51%;
     --critical-foreground: 0 0% 100%;
     --critical-soft: 0 86% 97%;

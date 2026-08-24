@@ -54,6 +54,14 @@ const config: Config = {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        highrisk: {
+          DEFAULT: "hsl(var(--highrisk))",
+          foreground: "hsl(var(--highrisk-foreground))",
+        },
         critical: {
           DEFAULT: "hsl(var(--critical))",
           foreground: "hsl(var(--critical-foreground))",
